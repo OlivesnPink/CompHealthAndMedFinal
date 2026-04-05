@@ -1,12 +1,14 @@
 # Environment
+Ran on the UML edu gpu servers, setup may break on other systems/architectures
 ## Setting up the environment
 Make sure you have conda or miniconda installed, this should let you quickly set up the environment for usage. The provided environment has most if not all relevant packages installed such as matplotlib, pandas, pytorch, and so on. To import and use the environment, run the following commands <br>
-`conda env create --name EyeClassifierEnv --file environment.yml` <br>
-`conda activate EyeClassifierEnv`
+`python3.12 -m venv <path to virtual environment>`<br>
+`source <path to virtual environment>/bin/activate`<br>
+`pip install -r ./requirements.txt`
 
 ## Updating environment
-If any new packages need to be installed, make the environment file is updated before pushing an update to the repository. Export the environment after adding any packages by using the following command <br>
-`conda export --format=environment-yaml > environment.yml`
+If any new packages need to be installed, make the requirements file is updated before pushing an update to the repository. Export the environment after adding any packages by using the following command <br>
+`pip freeze > requirements.txt`
 
 # GIT practices
 You can find a git cheat sheet [here](https://git-scm.com/cheat-sheet)<br>
