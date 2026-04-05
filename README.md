@@ -21,3 +21,9 @@ You need an IEEE account to download the dataset, use the all classes dataset ra
 ## Compressing the dataset
 
 Since the dataset is too big to fit on the UML gpu servers, a script has been attached (DatasetCompresser.ipynb), run the notebook file specifying the target path, will result in all the images being shrunken down and rescaled to 1028x1028. Once it's been compressed it can be transferred to the GPU servers using filezilla
+
+# Resources
+
+### RFMiD: Retinal Image Analysis for multi-Disease Detection challenge
+Link to paper [here](https://www.sciencedirect.com/science/article/pii/S1361841524002901)<br>
+paper goes over the challenge and what competitors did to get their results, could provide useful ideas on how to improve models
