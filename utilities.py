@@ -158,11 +158,11 @@ class TrainingResults:
         plt.show()
 
     def plot_losses(self):
-        epochs = range(1, len(self.training_accuracies) + 1)
+        epochs = range(1, len(self.training_losses) + 1)
         plt.figure(figsize=(10, 15))
         plt.subplot(2, 1, 2)
-        plt.plot(epochs, self.training_accuracies, label='Training Loss')
-        plt.plot(epochs, self.validation_accuracies, label='Validation Loss')
+        plt.plot(epochs, self.training_losses, label='Training Loss')
+        plt.plot(epochs, self.validation_losses, label='Validation Loss')
         plt.title('Training and Validation Loss')
         plt.xlabel('Epochs')
         plt.legend()
