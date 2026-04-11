@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch
 
 def get_accuracy(predicted, labels):
@@ -137,9 +138,33 @@ class TrainingResults:
         :param training_accuracies: The list of training accuracies.
         :param training_losses: The list of training losses.
         :param validation_accuracies: The list of validation accuracies.
-        :param validation_losses: TheThe list of validation losses.
+        :param validation_losses: The list of validation losses.
         '''
         self.training_accuracies = training_accuracies
         self.training_losses = training_losses
         self.validation_accuracies = validation_accuracies
         self.validation_losses = validation_losses
+
+    def plot_accuracies(self):
+        epochs = range(1, len(self.training_accuracies) + 1)
+        plt.figure(figsize=(10, 15))
+        plt.subplot(2, 1, 2)
+        plt.plot(epochs, self.training_accuracies, label='Training Accuracy')
+        plt.plot(epochs, self.validation_accuracies, label='Validation Accuracy')
+        plt.title('Training and Validation Accuracy')
+        plt.xlabel('Epochs')
+        plt.legend()
+        plt.figure()
+        plt.show()
+
+    def plot_losses(self):
+        epochs = range(1, len(self.training_accuracies) + 1)
+        plt.figure(figsize=(10, 15))
+        plt.subplot(2, 1, 2)
+        plt.plot(epochs, self.training_accuracies, label='Training Loss')
+        plt.plot(epochs, self.validation_accuracies, label='Validation Loss')
+        plt.title('Training and Validation Loss')
+        plt.xlabel('Epochs')
+        plt.legend()
+        plt.figure()
+        plt.show()
