@@ -1,6 +1,7 @@
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+import torch
 
 class ModelEvaluator:
     '''
@@ -36,7 +37,7 @@ class ModelEvaluator:
 
     def train(self, model, epoch_count):
         '''
-        Trains and validates the specified data model on through the
+        Trains and validates the specified data model through the
         ModelEvaluator.
 
         :param self: The ModelEvaluator.
@@ -92,6 +93,34 @@ class ModelEvaluator:
                                training_losses,
                                validation_accuracies,
                                validation_losses)
+
+    def test(self, model):
+        '''
+        Tests the specified data model through the ModelEvaluator.
+
+        :param self: The ModelEvaluator.
+        :param model: The data model to test.
+        :return: A new instance of the PerformanceMetrics class that contains
+                 performance metrics.
+        '''
+        total_tp = 0
+        total_tn = 0
+        total_fp = 0
+        total_fn = 0
+        model.eval()
+
+        with torch.no_grad():
+            for inputs, labels in self.testing_set:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                predictions = outputs > 0.5
+                tn, fp, fn, tp = confusion_matrix(labels, predictions).ravel()
+                total_tp += tp
+                total_tn += tn
+                total_fp += fp
+                total_fn += fn
+
+        return PerformanceMetrics(total_tp, total_tn, total_fp, total_fn)
 
 class TrainingMetrics:
     '''
