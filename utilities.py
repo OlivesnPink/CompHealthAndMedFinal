@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-class ModelTrainer:
+class ModelEvaluator:
     '''
-    Provides methods that train and validate data models according to a set of
+    Provides methods that evaluate data models according to a set of
     configurations.
     '''
     def __init__(self,
@@ -13,9 +13,9 @@ class ModelTrainer:
                  optimizer,
                  device):
         '''
-        Initializes a new instance of the ModelTrainer class that trains data
-        models on data loaded from the specified data loaders into the specified
-        device using specified loss criterion and optimizer.
+        Initializes a new instance of the ModelEvaluator class that evaluates
+        data models on data loaded from the specified data loaders into the
+        specified device using specified loss criterion and optimizer.
 
         :param self: The instance to initialize.
         :param training_set: The data loader containing the training set.
@@ -33,9 +33,9 @@ class ModelTrainer:
     def train(self, model, epoch_count):
         '''
         Trains and validates the specified data model on through the
-        ModelTrainer.
+        ModelEvaluator.
 
-        :param self: The ModelTrainer.
+        :param self: The ModelEvaluator.
         :param model: The data model to train and validate.
         :return: A new instance of the TrainingResults class that contains
                  training accuracy and loss metrics.
