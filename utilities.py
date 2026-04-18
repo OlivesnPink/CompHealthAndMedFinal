@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 class ModelTrainer:
     '''
@@ -39,10 +40,10 @@ class ModelTrainer:
         :return: A new instance of the TrainingResults class that contains
                  training accuracy and loss metrics.
         '''
-        training_accuracies = [0] * epoch_count
-        training_losses = [0] * epoch_count
-        validation_accuracies = [0] * epoch_count
-        validation_losses = [0] * epoch_count
+        training_accuracies = np.zeros(epoch_count)
+        training_losses = np.zeros(epoch_count)
+        validation_accuracies = np.zeros(epoch_count)
+        validation_losses = np.zeros(epoch_count)
 
         for epoch in range(epoch_count):
             # Begin training loop.
