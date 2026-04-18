@@ -178,15 +178,3 @@ class PerformanceMetrics:
         self.precision = precision
         self.recall = recall
         self.f1_score = f1_score
-
-    def summarize(self):
-        '''
-        Returns a pandas data frame that summarizes the PerformanceMetrics as a
-        table.
-
-        :param self: The instance to summarize.
-        '''
-        return pd.DataFrame(index=[''] * 4, data={
-            'Metrics' : ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
-            'Values' : [self.accuracy, self.precision, self.recall, self.f1_score]
-        })
