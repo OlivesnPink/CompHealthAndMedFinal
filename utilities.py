@@ -52,42 +52,42 @@ class ModelEvaluator:
 
         for epoch in range(epoch_count):
             # Begin training loop.
-            loss_total = 0
-            sample_total = 0
-            correct_total = 0
+            total_loss = 0
+            total_samples = 0
+            total_correct = 0
 
             for inputs, labels in self.training_set:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = model(inputs)
                 predictions = outputs > 0.5
-                losses = self.loss_criterion(outputs, labels)
-                losses.backward()
+                loss = self.loss_criterion(outputs, labels)
+                loss.backward()
                 self.optimizer.step()
-                loss_total += losses.item()
-                sample_total += labels.size(0)
-                correct_total += (predictions == labels).sum().item()
+                total_loss += loss.item()
+                total_samples += labels.size(0)
+                total_correct += (predictions == labels).sum().item()
 
-            training_accuracies[epoch] = correct_total / sample_total
-            training_losses[epoch] = loss_total / len(self.training_set)
+            training_accuracies[epoch] = total_correct / total_samples
+            training_losses[epoch] = total_loss / len(self.training_set)
 
             # Begin validation loop.
-            loss_total = 0
-            sample_total = 0
-            correct_total = 0
+            total_loss = 0
+            total_samples = 0
+            total_correct = 0
             model.eval()
 
             for inputs, labels in self.validation_set:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 predictions = outputs > 0.5
-                losses = self.loss_criterion(outputs, labels)
-                loss_total += losses.item()
-                sample_total += labels.size(0)
-                correct_total += (predictions == labels).sum().item()
+                loss = self.loss_criterion(outputs, labels)
+                total_loss += loss.item()
+                total_samples += labels.size(0)
+                total_correct += (predictions == labels).sum().item()
 
-            validation_accuracies[epoch] = correct_total / sample_total
-            validation_losses[epoch] = loss_total / len(self.validation_set)
+            validation_accuracies[epoch] = total_correct / total_samples
+            validation_losses[epoch] = total_loss / len(self.validation_set)
 
         return TrainingMetrics(training_accuracies,
                                training_losses,
