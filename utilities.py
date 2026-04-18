@@ -40,7 +40,7 @@ class ModelEvaluator:
 
         :param self: The ModelEvaluator.
         :param model: The data model to train and validate.
-        :return: A new instance of the TrainingResults class that contains
+        :return: A new instance of the TrainingMetrics class that contains
                  training accuracy and loss metrics.
         '''
         training_accuracies = np.zeros(epoch_count)
@@ -87,12 +87,12 @@ class ModelEvaluator:
             validation_accuracies[epoch] = correct_total / sample_total
             validation_losses[epoch] = loss_total / len(self.validation_set)
 
-        return TrainingResults(training_accuracies,
+        return TrainingMetrics(training_accuracies,
                                training_losses,
                                validation_accuracies,
                                validation_losses)
 
-class TrainingResults:
+class TrainingMetrics:
     '''
     Contains metrics that measure accuracy and loss across training epochs.
     '''
