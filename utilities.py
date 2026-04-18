@@ -102,7 +102,7 @@ class TrainingMetrics:
                  validation_accuracies,
                  validation_losses):
         '''
-        Initializes a new instance of the TrainingResults class that contains
+        Initializes a new instance of the TrainingMetrics class that contains
         the specified lists of accuracies and losses obtained across training
         epochs.
 
@@ -140,3 +140,28 @@ class TrainingMetrics:
         plt.legend()
         plt.figure()
         plt.show()
+
+class PerformanceMetrics:
+    '''
+    Contains metrics that measure a data model's performance in terms of
+    accuracy, precision, recall, and F1 score.
+    '''
+    def __init__(self,
+                 accuracy,
+                 precision,
+                 recall,
+                 f1_score):
+        '''
+        Initializes a new instance of the PerformanceMetrics class that contains
+        the specified accuracy, precision, recall, and F1 score.
+
+        :param self: The instance to initialize.
+        :param accuracy: The accuracy of the data model.
+        :param precision: The precision of the data model.
+        :param recall: The recall of the data model.
+        :param f1_score: The F1 score of the data model.
+        '''
+        self.accuracy = accuracy
+        self.precision = precision
+        self.recall = recall
+        self.f1_score = f1_score
