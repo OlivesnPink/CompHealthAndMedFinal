@@ -100,13 +100,9 @@ class ModelEvaluator:
 
         :param self: The ModelEvaluator.
         :param model: The data model to test.
-        :return: A new instance of the PerformanceMetrics class that contains
-                 performance metrics.
+        :return: A confusion matrix containing performance metrics.
         '''
-        total_tp = 0
-        total_tn = 0
-        total_fp = 0
-        total_fn = 0
+        matrix = np.zeros((46, 46), dtype=int)
         model.eval()
 
         with torch.no_grad():
@@ -114,13 +110,9 @@ class ModelEvaluator:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 predictions = outputs > 0.5
-                tn, fp, fn, tp = confusion_matrix(labels, predictions).ravel()
-                total_tp += tp
-                total_tn += tn
-                total_fp += fp
-                total_fn += fn
+                matrix += confusion_matrix(labels, predictions)
 
-        return PerformanceMetrics(total_tp, total_tn, total_fp, total_fn)
+        return matrix
 
 class TrainingMetrics:
     '''
@@ -182,75 +174,3 @@ class TrainingMetrics:
         plt.legend()
         plt.figure()
         plt.show()
-
-class PerformanceMetrics:
-    '''
-    Contains metrics that measure a data model's performance.
-    '''
-    def __init__(self, tp, tn, fp, fn):
-        '''
-        Initializes a new instance of the PerformanceMetrics class to the
-        specified TP, TN, FP, and FN metrics.
-
-        :param self: The instance to initialize.
-        :param tp: The true positives.
-        :param tn: The true negatives.
-        :param fp: The false positives.
-        :param fn: The false negatives.
-        '''
-        self.tp = tp
-        self.tn = tn
-        self.fp = fp
-        self.fn = fn
-
-    def accuracy(self):
-        '''
-        Returns the accuracy of a data model.
-
-        :param self: The instance containing performance metrics of a data
-                     model.
-        :return: The accuracy of a data model.
-        '''
-        return (self.tp + self.tn) / (self.tp + self.tn + self.fp + self.fn)
-
-    def precision(self):
-        '''
-        Returns the precision of a data model.
-
-        :param self: The instance containing performance metrics of a data
-                     model.
-        :return: The precision of a data model.
-        '''
-        return self.tp / (self.tp + self.fp)
-
-    def recall(self):
-        '''
-        Returns the recall of a data model.
-
-        :param self: The instance containing performance metrics of a data
-                     model.
-        :return: The recall of a data model.
-        '''
-        return self.tp / (self.tp + self.fn)
-
-    def specificity(self):
-        '''
-        Returns the specificity of a data model.
-
-        :param self: The instance containing performance metrics of a data
-                     model.
-        :return: The specificity of a data model.
-        '''
-        return self.tn / (self.tn + self.fp)
-
-    def f1_score(self):
-        '''
-        Returns the F1 score of a data model.
-
-        :param self: The instance containing performance metrics of a data
-                     model.
-        :return: The F1 score of a data model.
-        '''
-        precision = self.precision()
-        recall = self.recall()
-        return 2 * precision * recall / (precision + recall)
