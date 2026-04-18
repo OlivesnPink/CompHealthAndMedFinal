@@ -1,7 +1,54 @@
+from PIL import Image
 from sklearn.metrics import confusion_matrix
+from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+
+class FundusImageDataset(Dataset):
+    '''
+    Represents a partition of the RFMiD dataset.
+    '''
+    def __init__(self, metadata, image_directory, transform):
+        '''
+        Initializes a new instance of the FundusImageDataset that contains the
+        specified data frame, loads images from the specified directory, and
+        modifies them using the specified transform.
+
+        :self: The instance to initialize.
+        :metadata: The data frame containing ground truth labels.
+        :image_directory: The directory containing images in the dataset.
+        :transform: The transform used to modify images loaded from the dataset.
+        '''
+        self.metadata = metadata
+        self.image_directory = image_directory
+        self.transform = transform
+
+    def __len__(self):
+        '''
+        Returns the size of the FundusImageDataset.
+
+        :self: The instance to get the size of.
+        :return: The size of the EyeImageDataset.
+        '''
+        return len(self.metadata)
+
+    def __getitem__(self, index):
+        '''
+        Returns an image and vector of ground truth labels at the specified row
+        index from the FundusImageDataset.
+
+        :self: The instance to search.
+        :index: The row index of the desired image and vector of ground truth
+                labels.
+        :return: A tuple containing an image and vector of ground truth labels
+                 at index.
+        '''
+        row = self.metadata.iloc[index]
+        filepath = f'{self.image_directory}/{row['ID']}.png'
+        image = self.transform(Image.open(filepath))
+        labels = torch.tensor(row[1:].tolist())
+        return image, labels
 
 class ModelEvaluator:
     '''
