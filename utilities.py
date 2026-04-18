@@ -119,6 +119,12 @@ class TrainingMetrics:
         self.validation_losses = validation_losses
 
     def show_accuracies(self):
+        '''
+        Shows a plot of the training and validation accuracies contained by the
+        TrainingMetrics.
+
+        :param self: The instance containing training and validation accuracies.
+        '''
         epochs = range(1, len(self.training_accuracies) + 1)
         plt.figure(figsize=(10, 15))
         plt.subplot(2, 1, 2)
@@ -131,6 +137,12 @@ class TrainingMetrics:
         plt.show()
 
     def show_losses(self):
+        '''
+        Shows a plot of the training and validation losses contained by the
+        TrainingMetrics.
+
+        :param self: The instance containing training and validation losses.
+        '''
         epochs = range(1, len(self.training_losses) + 1)
         plt.figure(figsize=(10, 15))
         plt.subplot(2, 1, 2)
