@@ -9,6 +9,7 @@ class ModelEvaluator:
     def __init__(self,
                  training_set,
                  validation_set,
+                 testing_set,
                  loss_criterion,
                  optimizer,
                  device):
@@ -20,12 +21,14 @@ class ModelEvaluator:
         :param self: The instance to initialize.
         :param training_set: The data loader containing the training set.
         :param validation_set: The data loader containing the validation set.
+        :param testing_set: The data loader containing the testing set.
         :param loss_criterion: The loss function to use during training.
         :param optimizer: The optimizer to use during training.
         :param device: The device to load data into.
         '''
         self.training_set = training_set
         self.validation_set = validation_set
+        self.testing_set = testing_set
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
         self.device = device
