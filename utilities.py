@@ -156,25 +156,72 @@ class TrainingMetrics:
 
 class PerformanceMetrics:
     '''
-    Contains metrics that measure a data model's performance in terms of
-    accuracy, precision, recall, and F1 score.
+    Contains metrics that measure a data model's performance.
     '''
-    def __init__(self,
-                 accuracy,
-                 precision,
-                 recall,
-                 f1_score):
+    def __init__(self, tp, tn, fp, fn):
         '''
-        Initializes a new instance of the PerformanceMetrics class that contains
-        the specified accuracy, precision, recall, and F1 score.
+        Initializes a new instance of the PerformanceMetrics class to the
+        specified TP, TN, FP, and FN metrics.
 
         :param self: The instance to initialize.
-        :param accuracy: The accuracy of the data model.
-        :param precision: The precision of the data model.
-        :param recall: The recall of the data model.
-        :param f1_score: The F1 score of the data model.
+        :param tp: The true positives.
+        :param tn: The true negatives.
+        :param fp: The false positives.
+        :param fn: The false negatives.
         '''
-        self.accuracy = accuracy
-        self.precision = precision
-        self.recall = recall
-        self.f1_score = f1_score
+        self.tp = tp
+        self.tn = tn
+        self.fp = fp
+        self.fn = fn
+
+    def accuracy(self):
+        '''
+        Returns the accuracy of a data model.
+
+        :param self: The instance containing performance metrics of a data
+                     model.
+        :return: The accuracy of a data model.
+        '''
+        return (self.tp + self.tn) / (self.tp + self.tn + self.fp + self.fn)
+
+    def precision(self):
+        '''
+        Returns the precision of a data model.
+
+        :param self: The instance containing performance metrics of a data
+                     model.
+        :return: The precision of a data model.
+        '''
+        return self.tp / (self.tp + self.fp)
+
+    def recall(self):
+        '''
+        Returns the recall of a data model.
+
+        :param self: The instance containing performance metrics of a data
+                     model.
+        :return: The recall of a data model.
+        '''
+        return self.tp / (self.tp + self.fn)
+
+    def specificity(self):
+        '''
+        Returns the specificity of a data model.
+
+        :param self: The instance containing performance metrics of a data
+                     model.
+        :return: The specificity of a data model.
+        '''
+        return self.tn / (self.tn + self.fp)
+
+    def f1_score(self):
+        '''
+        Returns the F1 score of a data model.
+
+        :param self: The instance containing performance metrics of a data
+                     model.
+        :return: The F1 score of a data model.
+        '''
+        precision = self.precision()
+        recall = self.recall()
+        return 2 * precision * recall / (precision + recall)
