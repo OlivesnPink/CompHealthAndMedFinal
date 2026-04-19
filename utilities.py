@@ -47,7 +47,7 @@ class FundusImageDataset(Dataset):
         row = self.metadata.iloc[index]
         filepath = f'{self.image_directory}/{row['ID']}.png'
         image = self.transform(Image.open(filepath))
-        labels = torch.tensor(row[1:].to_numpy())
+        labels = torch.from_numpy(row[1:].to_numpy(float))
         return image, labels
 
 class ModelEvaluator:
@@ -56,9 +56,9 @@ class ModelEvaluator:
     configurations.
     '''
     def __init__(self,
-                 training_set,
-                 validation_set,
-                 testing_set,
+                 training_loader,
+                 validation_loader,
+                 testing_loader,
                  loss_criterion,
                  optimizer,
                  device):
@@ -68,16 +68,16 @@ class ModelEvaluator:
         specified device using specified loss criterion and optimizer.
 
         :param self: The instance to initialize.
-        :param training_set: The data loader containing the training set.
-        :param validation_set: The data loader containing the validation set.
-        :param testing_set: The data loader containing the testing set.
+        :param training_loader: The data loader containing the training set.
+        :param validation_loader: The data loader containing the validation set.
+        :param testing_loader: The data loader containing the testing set.
         :param loss_criterion: The loss function to use during training.
         :param optimizer: The optimizer to use during training.
         :param device: The device to load data into.
         '''
-        self.training_set = training_set
-        self.validation_set = validation_set
-        self.testing_set = testing_set
+        self.training_loader = training_loader
+        self.validation_loader = validation_loader
+        self.testing_loader = testing_loader
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
         self.device = device
@@ -103,7 +103,7 @@ class ModelEvaluator:
             total_samples = 0
             total_correct = 0
 
-            for inputs, labels in self.training_set:
+            for inputs, labels in self.training_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = model(inputs)
@@ -116,7 +116,7 @@ class ModelEvaluator:
                 total_correct += (predictions == labels).sum().item()
 
             training_accuracies[epoch] = total_correct / total_samples
-            training_losses[epoch] = total_loss / len(self.training_set)
+            training_losses[epoch] = total_loss / len(self.training_loader)
 
             # Begin validation loop.
             total_loss = 0
@@ -124,7 +124,7 @@ class ModelEvaluator:
             total_correct = 0
             model.eval()
 
-            for inputs, labels in self.validation_set:
+            for inputs, labels in self.validation_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 predictions = outputs > 0.5
@@ -134,7 +134,7 @@ class ModelEvaluator:
                 total_correct += (predictions == labels).sum().item()
 
             validation_accuracies[epoch] = total_correct / total_samples
-            validation_losses[epoch] = total_loss / len(self.validation_set)
+            validation_losses[epoch] = total_loss / len(self.validation_loader)
 
         return TrainingMetrics(training_accuracies,
                                training_losses,
@@ -153,7 +153,7 @@ class ModelEvaluator:
         model.eval()
 
         with torch.no_grad():
-            for inputs, labels in self.testing_set:
+            for inputs, labels in self.testing_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 predictions = outputs > 0.5
