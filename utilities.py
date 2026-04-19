@@ -47,7 +47,7 @@ class FundusImageDataset(Dataset):
         row = self.metadata.iloc[index]
         filepath = f'{self.image_directory}/{row['ID']}.png'
         image = self.transform(Image.open(filepath))
-        labels = torch.tensor(row[1:].tolist())
+        labels = torch.tensor(row[1:].to_numpy())
         return image, labels
 
 class ModelEvaluator:
