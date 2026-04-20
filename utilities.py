@@ -1,5 +1,5 @@
 from PIL import Image
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import multilabel_confusion_matrix
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +24,7 @@ class FundusImageDataset(Dataset):
         self.metadata = metadata
         self.image_directory = image_directory
         self.transform = transform
+        self.classes = metadata.columns[1:].to_numpy()
 
     def __len__(self):
         '''
@@ -148,19 +149,22 @@ class ModelEvaluator:
 
         :param self: The ModelEvaluator.
         :param model: The data model to test.
-        :return: A confusion matrix containing performance metrics.
+        :return: A numpy array containing confusion matrices for each label.
         '''
-        matrix = np.zeros((46, 46), dtype=int)
+        label_count = len(self.testing_loader.dataset.classes)
+        matrices = np.zeros((label_count, 2, 2), dtype=int)
         model.eval()
 
         with torch.no_grad():
             for inputs, labels in self.testing_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
-                predictions = outputs > 0.5
-                matrix += confusion_matrix(labels.numpy(), predictions.numpy())
+                predictions = (torch.sigmoid(outputs) > 0.5).float()
+                labels = labels.cpu().numpy()
+                predictions = predictions.cpu().numpy()
+                matrices += multilabel_confusion_matrix(labels, predictions)
 
-        return matrix
+        return matrices
 
 class TrainingMetrics:
     '''
