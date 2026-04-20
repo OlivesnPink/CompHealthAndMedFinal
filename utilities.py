@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 
 class FundusImageDataset(Dataset):
     '''
@@ -221,3 +222,47 @@ class TrainingMetrics:
         plt.legend()
         plt.figure()
         plt.show()
+
+class dataAugmenter:
+    '''
+    Helper class to provide data augmentation
+    '''
+    def __init__(self, image_size: tuple[int, int],
+                 norm_mean: tuple[int, int, int],
+                 norm_std: tuple[int, int, int],
+                 useCutOut: bool = True
+                 ):
+        '''
+        Sets parameters for transforms in properties transform_train and transform_test
+
+        :param self: instance to initialize
+        :param norm_mean: means for the red, green, blue channels
+        :param norm_std: standard deviations for red, green, blue channels
+        :param useCutOut: wether or not cutout is implemented
+        '''
+        self._transform_train = transforms.compose([
+            transforms.Resize(image_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(degrees=60),
+            # using list unpacking, random erase is only added to list if useCutOut is true
+            *([transforms.RandomErasing(p=0.5,
+                                        scale = (0.02, 0.15),
+                                        ratio = (0.5, 1.5),
+                                        value = 'random')]
+                if useCutOut else []),
+            transforms.ToTensor(),
+            transforms.Normalize(norm_mean, norm_std)
+        ])
+        self._transform_test = transforms.compose([
+            transforms.Resize(image_size),
+            transforms.ToTensor(),
+            transforms.Normalize(norm_mean, norm_std)
+        ])
+
+    @property
+    def transform_train(self):
+        return self._transform_train
+    
+    @property
+    def transform_test(self):
+        return self._transform_test
