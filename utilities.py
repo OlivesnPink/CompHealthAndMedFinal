@@ -1,9 +1,10 @@
 from PIL import Image
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import multilabel_confusion_matrix
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 
 class FundusImageDataset(Dataset):
     '''
@@ -23,6 +24,7 @@ class FundusImageDataset(Dataset):
         self.metadata = metadata
         self.image_directory = image_directory
         self.transform = transform
+        self.classes = metadata.columns[1:].to_numpy()
 
     def __len__(self):
         '''
@@ -99,38 +101,38 @@ class ModelEvaluator:
 
         for epoch in range(epoch_count):
             # Begin training loop.
-            total_loss = 0
-            total_samples = 0
-            total_correct = 0
+            total_loss = 0.0
+            total_samples = 0.0
+            total_correct = 0.0
 
             for inputs, labels in self.training_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = model(inputs)
-                predictions = outputs > 0.5
+                predictions = (torch.sigmoid(outputs) > 0.5).float()
                 loss = self.loss_criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
-                total_samples += labels.size(0)
+                total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
 
             training_accuracies[epoch] = total_correct / total_samples
             training_losses[epoch] = total_loss / len(self.training_loader)
 
             # Begin validation loop.
-            total_loss = 0
-            total_samples = 0
-            total_correct = 0
+            total_loss = 0.0
+            total_samples = 0.0
+            total_correct = 0.0
             model.eval()
 
             for inputs, labels in self.validation_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
-                predictions = outputs > 0.5
+                predictions = (torch.sigmoid(outputs) > 0.5).float()
                 loss = self.loss_criterion(outputs, labels)
                 total_loss += loss.item()
-                total_samples += labels.size(0)
+                total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
 
             validation_accuracies[epoch] = total_correct / total_samples
@@ -147,19 +149,22 @@ class ModelEvaluator:
 
         :param self: The ModelEvaluator.
         :param model: The data model to test.
-        :return: A confusion matrix containing performance metrics.
+        :return: A numpy array containing confusion matrices for each label.
         '''
-        matrix = np.zeros((46, 46), dtype=int)
+        label_count = len(self.testing_loader.dataset.classes)
+        matrices = np.zeros((label_count, 2, 2), dtype=int)
         model.eval()
 
         with torch.no_grad():
             for inputs, labels in self.testing_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
-                predictions = outputs > 0.5
-                matrix += confusion_matrix(labels, predictions)
+                predictions = (torch.sigmoid(outputs) > 0.5).float()
+                labels = labels.cpu().numpy()
+                predictions = predictions.cpu().numpy()
+                matrices += multilabel_confusion_matrix(labels, predictions)
 
-        return matrix
+        return matrices
 
 class TrainingMetrics:
     '''
@@ -221,3 +226,47 @@ class TrainingMetrics:
         plt.legend()
         plt.figure()
         plt.show()
+
+class dataAugmenter:
+    '''
+    Helper class to provide data augmentation
+    '''
+    def __init__(self, image_size: tuple[int, int],
+                 norm_mean: tuple[int, int, int],
+                 norm_std: tuple[int, int, int],
+                 useCutOut: bool = True
+                 ):
+        '''
+        Sets parameters for transforms in properties transform_train and transform_test
+
+        :param self: instance to initialize
+        :param norm_mean: means for the red, green, blue channels
+        :param norm_std: standard deviations for red, green, blue channels
+        :param useCutOut: wether or not cutout is implemented
+        '''
+        self._transform_train = transforms.compose([
+            transforms.Resize(image_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(degrees=60),
+            # using list unpacking, random erase is only added to list if useCutOut is true
+            *([transforms.RandomErasing(p=0.5,
+                                        scale = (0.02, 0.15),
+                                        ratio = (0.5, 1.5),
+                                        value = 'random')]
+                if useCutOut else []),
+            transforms.ToTensor(),
+            transforms.Normalize(norm_mean, norm_std)
+        ])
+        self._transform_test = transforms.compose([
+            transforms.Resize(image_size),
+            transforms.ToTensor(),
+            transforms.Normalize(norm_mean, norm_std)
+        ])
+
+    @property
+    def transform_train(self):
+        return self._transform_train
+    
+    @property
+    def transform_test(self):
+        return self._transform_test
