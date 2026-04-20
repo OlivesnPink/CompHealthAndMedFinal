@@ -99,38 +99,38 @@ class ModelEvaluator:
 
         for epoch in range(epoch_count):
             # Begin training loop.
-            total_loss = 0
-            total_samples = 0
-            total_correct = 0
+            total_loss = 0.0
+            total_samples = 0.0
+            total_correct = 0.0
 
             for inputs, labels in self.training_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = model(inputs)
-                predictions = outputs > 0.5
+                predictions = (torch.sigmoid(outputs) > 0.5).float()
                 loss = self.loss_criterion(outputs, labels)
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
-                total_samples += labels.size(0)
+                total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
 
             training_accuracies[epoch] = total_correct / total_samples
             training_losses[epoch] = total_loss / len(self.training_loader)
 
             # Begin validation loop.
-            total_loss = 0
-            total_samples = 0
-            total_correct = 0
+            total_loss = 0.0
+            total_samples = 0.0
+            total_correct = 0.0
             model.eval()
 
             for inputs, labels in self.validation_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
-                predictions = outputs > 0.5
+                predictions = (torch.sigmoid(outputs) > 0.5).float()
                 loss = self.loss_criterion(outputs, labels)
                 total_loss += loss.item()
-                total_samples += labels.size(0)
+                total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
 
             validation_accuracies[epoch] = total_correct / total_samples
@@ -157,7 +157,7 @@ class ModelEvaluator:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 predictions = outputs > 0.5
-                matrix += confusion_matrix(labels, predictions)
+                matrix += confusion_matrix(labels.numpy(), predictions.numpy())
 
         return matrix
 
