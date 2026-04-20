@@ -5,3 +5,7 @@ the paper going over the challenge mentions all 8 teams used ROI. DatasetCompres
 
 ### Looking at classes
 The CSV ground truths file has a column for every disease, a way to see the disease counts could be to just sum for every column to get a good class count. Figuring out how to do the weights might be tricky as it may need to be on a per disease basis?
+
+
+
+# 
