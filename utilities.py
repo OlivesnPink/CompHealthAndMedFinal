@@ -171,6 +171,25 @@ class ModelEvaluator:
                 matrices += multilabel_confusion_matrix(labels, predictions)
 
         return matrices
+    
+    def testPrediction(self, model, sigmoid):
+        '''
+        Get predictions for a given test set
+        
+        :param self: ModelEvaluator
+        :param model: The data model to get predictions from.
+        :param sigmoid: Dictates minimum probability for a disease to be classified or not
+        :return: A numpy array'''
+
+        label_count = len(self.testing_loader.dataset.classes)
+        model.eval()
+        with torch.no_grad():
+            for inputs, labels in self.testing_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                predictions = (torch.sigmoid(outputs) > sigmoid).float()
+                return predictions
+
 
 class TrainingMetrics:
     '''
