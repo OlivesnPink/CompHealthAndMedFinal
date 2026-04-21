@@ -255,12 +255,12 @@ class dataAugmenter:
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(degrees=60),
             # using list unpacking, random erase is only added to list if useCutOut is true
+            transforms.ToTensor(),
             *([transforms.RandomErasing(p=0.5,
                                         scale = (0.02, 0.15),
                                         ratio = (0.5, 1.5),
                                         value = 'random')]
                 if useCutOut else []),
-            transforms.ToTensor(),
             transforms.Normalize(norm_mean, norm_std)
         ])
         self._transform_test = transforms.Compose([
