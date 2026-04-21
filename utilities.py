@@ -244,7 +244,7 @@ class dataAugmenter:
         :param norm_std: standard deviations for red, green, blue channels
         :param useCutOut: wether or not cutout is implemented
         '''
-        self._transform_train = transforms.compose([
+        self._transform_train = transforms.Compose([
             transforms.Resize(image_size),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(degrees=60),
@@ -257,7 +257,7 @@ class dataAugmenter:
             transforms.ToTensor(),
             transforms.Normalize(norm_mean, norm_std)
         ])
-        self._transform_test = transforms.compose([
+        self._transform_test = transforms.Compose([
             transforms.Resize(image_size),
             transforms.ToTensor(),
             transforms.Normalize(norm_mean, norm_std)
