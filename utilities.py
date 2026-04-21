@@ -183,12 +183,17 @@ class ModelEvaluator:
 
         label_count = len(self.testing_loader.dataset.classes)
         model.eval()
+
+        total_predictions = []
         with torch.no_grad():
             for inputs, labels in self.testing_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
                 predictions = (torch.sigmoid(outputs) > sigmoid).float()
-                return predictions
+                total_predictions.append(predictions.cpu().numpy())
+        
+        # Concatenate all batch predictions into a single array
+        return np.concatenate(total_predictions, axis=0)
 
 
 class TrainingMetrics:
