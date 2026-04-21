@@ -84,13 +84,14 @@ class ModelEvaluator:
         self.optimizer = optimizer
         self.device = device
 
-    def train(self, model, epoch_count):
+    def train(self, model, epoch_count, verbose=False):
         '''
         Trains and validates the specified data model through the
         ModelEvaluator.
 
         :param self: The ModelEvaluator.
         :param model: The data model to train and validate.
+        :param verbose: Wether or not epochs are printed
         :return: A new instance of the TrainingMetrics class that contains
                  training accuracy and loss metrics.
         '''
@@ -137,6 +138,11 @@ class ModelEvaluator:
 
             validation_accuracies[epoch] = total_correct / total_samples
             validation_losses[epoch] = total_loss / len(self.validation_loader)
+
+            if verbose:
+                print(f"Epoch: {epoch+1}")
+                print(f"Loss: {training_losses[epoch]} Accuracy: {training_accuracies[epoch]}")
+                print(f"Validation Loss: {validation_losses[epoch]} Val Accuracy: {validation_accuracies[epoch]}")
 
         return TrainingMetrics(training_accuracies,
                                training_losses,
