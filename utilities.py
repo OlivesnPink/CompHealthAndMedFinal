@@ -172,7 +172,7 @@ class ModelEvaluator:
 
         return matrices
     
-    def testProbalitities(self, model):
+    def testProbabilities(self, model):
         '''
         Get predictions for a given test set
         
