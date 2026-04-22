@@ -172,7 +172,7 @@ class ModelEvaluator:
 
         return matrices
     
-    def testPrediction(self, model, sigmoid):
+    def testProbalitities(self, model, sigmoid):
         '''
         Get predictions for a given test set
         
@@ -189,7 +189,7 @@ class ModelEvaluator:
             for inputs, labels in self.testing_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = model(inputs)
-                predictions = (torch.sigmoid(outputs) > sigmoid).float()
+                predictions = torch.sigmoid(outputs)
                 total_predictions.append(predictions.cpu().numpy())
         
         # Concatenate all batch predictions into a single array
