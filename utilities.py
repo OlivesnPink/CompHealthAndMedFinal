@@ -1,6 +1,7 @@
 from PIL import Image
 from sklearn.metrics import multilabel_confusion_matrix
 from torch.utils.data import Dataset
+from torch.amp import autocast, grad_scaler
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -83,6 +84,7 @@ class ModelEvaluator:
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
         self.device = device
+        self.scaler = grad_scaler()
 
     def train(self, model, epoch_count, verbose=False):
         '''
@@ -109,11 +111,14 @@ class ModelEvaluator:
             for inputs, labels in self.training_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
-                outputs = model(inputs)
-                predictions = (torch.sigmoid(outputs) > 0.5).float()
-                loss = self.loss_criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
+                # autocast should reduce memory being used
+                with autocast():
+                    outputs = model(inputs)
+                    predictions = (torch.sigmoid(outputs) > 0.5).float()
+                    loss = self.loss_criterion(outputs, labels)
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
                 total_loss += loss.item()
                 total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
