@@ -1,7 +1,7 @@
 from PIL import Image
 from sklearn.metrics import multilabel_confusion_matrix
 from torch.utils.data import Dataset
-from torch.amp import autocast, grad_scaler
+from torch.amp import GradScaler, autocast
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -50,7 +50,7 @@ class FundusImageDataset(Dataset):
         row = self.metadata.iloc[index]
         filepath = f'{self.image_directory}/{row['ID']}.png'
         image = self.transform(Image.open(filepath))
-        labels = torch.from_numpy(row[1:].to_numpy(float))
+        labels = torch.from_numpy(row[1:].to_numpy().astype(np.float32))
         return image, labels
 
 class ModelEvaluator:
@@ -84,7 +84,7 @@ class ModelEvaluator:
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
         self.device = device
-        self.scaler = grad_scaler()
+        self.scaler = GradScaler()
 
     def train(self, model, epoch_count, verbose=False):
         '''
@@ -111,8 +111,7 @@ class ModelEvaluator:
             for inputs, labels in self.training_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
-                # autocast should reduce memory being used
-                with autocast():
+                with autocast(device_type=self.device.type):
                     outputs = model(inputs)
                     predictions = (torch.sigmoid(outputs) > 0.5).float()
                     loss = self.loss_criterion(outputs, labels)
