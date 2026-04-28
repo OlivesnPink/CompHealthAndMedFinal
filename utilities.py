@@ -85,7 +85,7 @@ class ModelEvaluator:
         self.testing_loader = testing_loader
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
-        self.lr_scheduler = self.lr_scheduler
+        self.lr_scheduler = lr_scheduler
         self.device = device
         self.scaler = GradScaler()
 
