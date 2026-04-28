@@ -64,7 +64,8 @@ class ModelEvaluator:
                  testing_loader,
                  loss_criterion,
                  optimizer,
-                 device):
+                 device,
+                 lr_scheduler=None):
         '''
         Initializes a new instance of the ModelEvaluator class that evaluates
         data models on data loaded from the specified data loaders into the
@@ -77,12 +78,14 @@ class ModelEvaluator:
         :param loss_criterion: The loss function to use during training.
         :param optimizer: The optimizer to use during training.
         :param device: The device to load data into.
+        :param lr_scheduler: The learning rate scheduler to use during training.
         '''
         self.training_loader = training_loader
         self.validation_loader = validation_loader
         self.testing_loader = testing_loader
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
+        self.lr_scheduler = self.lr_scheduler
         self.device = device
         self.scaler = GradScaler()
 
@@ -121,6 +124,9 @@ class ModelEvaluator:
                 total_loss += loss.item()
                 total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
+
+            if self.lr_scheduler:
+                self.lr_scheduler.step()
 
             training_accuracies[epoch] = total_correct / total_samples
             training_losses[epoch] = total_loss / len(self.training_loader)
@@ -175,11 +181,11 @@ class ModelEvaluator:
                 matrices += multilabel_confusion_matrix(labels, predictions)
 
         return matrices
-    
+
     def testProbabilities(self, model):
         '''
         Get predictions for a given test set
-        
+
         :param self: ModelEvaluator
         :param model: The data model to get predictions from.
         :param sigmoid: Dictates minimum probability for a disease to be classified or not
@@ -195,7 +201,7 @@ class ModelEvaluator:
                 outputs = model(inputs)
                 predictions = torch.sigmoid(outputs)
                 total_predictions.append(predictions.cpu().numpy())
-        
+
         # Concatenate all batch predictions into a single array
         return np.concatenate(total_predictions, axis=0)
 
@@ -300,7 +306,7 @@ class dataAugmenter:
     @property
     def transform_train(self):
         return self._transform_train
-    
+
     @property
     def transform_test(self):
         return self._transform_test
