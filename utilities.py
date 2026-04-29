@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+import os
 
 class FundusImageDataset(Dataset):
     '''
@@ -48,9 +49,9 @@ class FundusImageDataset(Dataset):
                  at index.
         '''
         row = self.metadata.iloc[index]
-        filepath = f'{self.image_directory}/{row['ID']}.png'
+        filepath = os.path.join(self.image_directory, row['ID'] + '.png')
         image = self.transform(Image.open(filepath))
-        labels = torch.from_numpy(row[1:].to_numpy().astype(np.float32))
+        labels = torch.from_numpy(row[1:].to_numpy().astype(float))
         return image, labels
 
 class ModelEvaluator:
@@ -85,7 +86,7 @@ class ModelEvaluator:
         self.testing_loader = testing_loader
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
-        self.lr_scheduler = self.lr_scheduler
+        self.lr_scheduler = lr_scheduler
         self.device = device
         self.scaler = GradScaler()
 
@@ -107,6 +108,7 @@ class ModelEvaluator:
 
         for epoch in range(epoch_count):
             # Begin training loop.
+            model.train()
             total_loss = 0.0
             total_samples = 0.0
             total_correct = 0.0
@@ -181,6 +183,30 @@ class ModelEvaluator:
                 matrices += multilabel_confusion_matrix(labels, predictions)
 
         return matrices
+
+    def getValidationProbabilities(self, model):
+        '''
+        Get validation probabilities and labels for threshold optimization
+        
+        :param self: ModelEvaluator
+        :param model: The data model to get predictions from.
+        :return: A tuple of (probabilities numpy array, labels numpy array)
+        '''
+        model.eval()
+        total_predictions = []
+        total_labels = []
+        
+        with torch.no_grad():
+            for inputs, labels in self.validation_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                predictions = torch.sigmoid(outputs)
+                total_predictions.append(predictions.cpu().numpy())
+                total_labels.append(labels.cpu().numpy())
+        
+        probabilities = np.concatenate(total_predictions, axis=0)
+        labels = np.concatenate(total_labels, axis=0)
+        return probabilities, labels
 
     def testProbabilities(self, model):
         '''
