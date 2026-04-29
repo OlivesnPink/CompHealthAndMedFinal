@@ -1,6 +1,7 @@
 from PIL import Image
 from sklearn.metrics import multilabel_confusion_matrix
 from torch.utils.data import Dataset
+from torch.amp import GradScaler, autocast
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -49,7 +50,7 @@ class FundusImageDataset(Dataset):
         row = self.metadata.iloc[index]
         filepath = f'{self.image_directory}/{row['ID']}.png'
         image = self.transform(Image.open(filepath))
-        labels = torch.from_numpy(row[1:].to_numpy(float))
+        labels = torch.from_numpy(row[1:].to_numpy().astype(np.float32))
         return image, labels
 
 class ModelEvaluator:
@@ -63,7 +64,8 @@ class ModelEvaluator:
                  testing_loader,
                  loss_criterion,
                  optimizer,
-                 device):
+                 device,
+                 lr_scheduler=None):
         '''
         Initializes a new instance of the ModelEvaluator class that evaluates
         data models on data loaded from the specified data loaders into the
@@ -76,21 +78,25 @@ class ModelEvaluator:
         :param loss_criterion: The loss function to use during training.
         :param optimizer: The optimizer to use during training.
         :param device: The device to load data into.
+        :param lr_scheduler: The learning rate scheduler to use during training.
         '''
         self.training_loader = training_loader
         self.validation_loader = validation_loader
         self.testing_loader = testing_loader
         self.loss_criterion = loss_criterion
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
         self.device = device
+        self.scaler = GradScaler()
 
-    def train(self, model, epoch_count):
+    def train(self, model, epoch_count, verbose=False):
         '''
         Trains and validates the specified data model through the
         ModelEvaluator.
 
         :param self: The ModelEvaluator.
         :param model: The data model to train and validate.
+        :param verbose: Wether or not epochs are printed
         :return: A new instance of the TrainingMetrics class that contains
                  training accuracy and loss metrics.
         '''
@@ -108,14 +114,19 @@ class ModelEvaluator:
             for inputs, labels in self.training_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
-                outputs = model(inputs)
-                predictions = (torch.sigmoid(outputs) > 0.5).float()
-                loss = self.loss_criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
+                with autocast(device_type=self.device.type):
+                    outputs = model(inputs)
+                    predictions = (torch.sigmoid(outputs) > 0.5).float()
+                    loss = self.loss_criterion(outputs, labels)
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
                 total_loss += loss.item()
                 total_samples += labels.numel()
                 total_correct += (predictions == labels).sum().item()
+
+            if self.lr_scheduler:
+                self.lr_scheduler.step()
 
             training_accuracies[epoch] = total_correct / total_samples
             training_losses[epoch] = total_loss / len(self.training_loader)
@@ -137,6 +148,11 @@ class ModelEvaluator:
 
             validation_accuracies[epoch] = total_correct / total_samples
             validation_losses[epoch] = total_loss / len(self.validation_loader)
+
+            if verbose:
+                print(f"Epoch: {epoch+1}")
+                print(f"Loss: {training_losses[epoch]} Accuracy: {training_accuracies[epoch]}")
+                print(f"Validation Loss: {validation_losses[epoch]} Val Accuracy: {validation_accuracies[epoch]}")
 
         return TrainingMetrics(training_accuracies,
                                training_losses,
@@ -165,6 +181,30 @@ class ModelEvaluator:
                 matrices += multilabel_confusion_matrix(labels, predictions)
 
         return matrices
+
+    def testProbabilities(self, model):
+        '''
+        Get predictions for a given test set
+
+        :param self: ModelEvaluator
+        :param model: The data model to get predictions from.
+        :param sigmoid: Dictates minimum probability for a disease to be classified or not
+        :return: A numpy array'''
+
+        label_count = len(self.testing_loader.dataset.classes)
+        model.eval()
+
+        total_predictions = []
+        with torch.no_grad():
+            for inputs, labels in self.testing_loader:
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                outputs = model(inputs)
+                predictions = torch.sigmoid(outputs)
+                total_predictions.append(predictions.cpu().numpy())
+
+        # Concatenate all batch predictions into a single array
+        return np.concatenate(total_predictions, axis=0)
+
 
 class TrainingMetrics:
     '''
@@ -244,20 +284,20 @@ class dataAugmenter:
         :param norm_std: standard deviations for red, green, blue channels
         :param useCutOut: wether or not cutout is implemented
         '''
-        self._transform_train = transforms.compose([
+        self._transform_train = transforms.Compose([
             transforms.Resize(image_size),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(degrees=60),
             # using list unpacking, random erase is only added to list if useCutOut is true
+            transforms.ToTensor(),
             *([transforms.RandomErasing(p=0.5,
                                         scale = (0.02, 0.15),
                                         ratio = (0.5, 1.5),
                                         value = 'random')]
                 if useCutOut else []),
-            transforms.ToTensor(),
             transforms.Normalize(norm_mean, norm_std)
         ])
-        self._transform_test = transforms.compose([
+        self._transform_test = transforms.Compose([
             transforms.Resize(image_size),
             transforms.ToTensor(),
             transforms.Normalize(norm_mean, norm_std)
@@ -266,7 +306,7 @@ class dataAugmenter:
     @property
     def transform_train(self):
         return self._transform_train
-    
+
     @property
     def transform_test(self):
         return self._transform_test
